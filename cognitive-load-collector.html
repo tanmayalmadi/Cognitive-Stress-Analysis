@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cognitive Load Study</title>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f5;--card:#fff;--ink:#1b2a41;--mute:#5d6b82;--line:#d5dbe5;--teal:#1f8a8a;--amber:#e0a030;--red:#c8453b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif;line-height:1.5}
+header{padding:18px 28px;border-bottom:1px solid var(--line);background:var(--card);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header h1{font-size:1.1rem;margin:0}
+header span{color:var(--mute);font-size:.9rem}
+main{max-width:1080px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:1fr 280px;gap:20px}
+@media(max-width:820px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px}
+h2{margin:0 0 6px;font-size:1.35rem}
+p.lead{color:var(--mute);margin:0 0 18px}
+label{display:block;font-weight:600;margin:14px 0 6px}
+input[type=text],select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:6px;font:inherit;background:#fff;color:var(--ink)}
+textarea{resize:none;font-family:'JetBrains Mono',monospace;font-size:1rem}
+button{font:inherit;font-weight:600;border:0;border-radius:6px;padding:11px 20px;background:var(--ink);color:#fff;cursor:pointer}
+button.alt{background:#fff;color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.hidden{display:none!important}
+.consent{background:#f6f8fb;border:1px solid var(--line);border-radius:6px;padding:12px 14px;font-size:.92rem;color:var(--mute);margin-top:16px}
+.consent label{display:flex;gap:10px;font-weight:400;margin:0;align-items:flex-start}
+.consent input{margin-top:4px}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.tag{font-size:.85rem;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mute)}
+.timer{font-family:'JetBrains Mono',monospace;font-size:1.6rem}
+.timer.low{color:var(--red)}
+.prompt{font-size:1.15rem;padding:16px;border-radius:6px;background:#f6f8fb;border-left:4px solid var(--teal);margin-bottom:14px;min-height:64px}
+.prompt.mono{font-family:'JetBrains Mono',monospace;font-size:1rem}
+.prompt .ok{color:var(--teal)} .prompt .bad{color:var(--red);background:#f8e1de}
+.meter{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:18px}
+.meter div{height:100%;width:0;background:var(--teal);transition:width .3s}
+.rate{display:flex;gap:8px;margin:12px 0 18px}
+.rate button{flex:1;background:#fff;color:var(--ink);border:1px solid var(--line)}
+.rate button:hover,.rate button.sel{background:var(--ink);color:#fff}
+.scale{display:flex;justify-content:space-between;color:var(--mute);font-size:.85rem}
+aside .card{margin-bottom:16px;padding:16px}
+video{width:100%;border-radius:6px;background:#0f1a2b;aspect-ratio:4/3;object-fit:cover;transform:scaleX(-1)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stat{background:#f6f8fb;border-radius:6px;padding:8px 10px}
+.stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:1.15rem}
+.stat small{color:var(--mute)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mute);margin-right:6px}
+.dot.on{background:var(--red);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){.dot.on{animation:none}}
+table{width:100%;border-collapse:collapse;font-size:.88rem;margin:14px 0}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.pred{padding:12px 14px;border-radius:6px;background:#f6f8fb;border:1px dashed var(--line);color:var(--mute);font-size:.92rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>Cognitive Load Study</h1>
+  <span id="status"><i class="dot" id="recDot"></i><span id="recText">Camera off</span></span>
+</header>
+
+<main>
+<section>
+
+  <!-- 1. START -->
+  <div class="card" id="screenStart">
+    <h2>Before you start</h2>
+    <p class="lead">You'll solve 6 short problems, alternating between math and typing. After each one, you'll rate how stressful it felt.</p>
+    <label for="pid">Participant name or ID</label>
+    <input type="text" id="pid" placeholder="e.g. P01" autocomplete="off">
+    <label for="diff">Difficulty</label>
+    <select id="diff">
+      <option value="1">Easy</option>
+      <option value="2">Medium</option>
+      <option value="3">Hard</option>
+      <option value="ramp" selected>Ramp up (easy to hard)</option>
+    </select>
+    <div class="consent">
+      <label><input type="checkbox" id="consent">
+      <span>I agree to the use of my webcam. A small photo is captured every 2 seconds during each problem, along with my typing speed, timing, and ratings. Data stays in this browser until I choose to download it.</span></label>
+    </div>
+    <div class="row"><button id="btnStart" disabled>Allow camera and start</button></div>
+    <p id="startErr" style="color:var(--red);margin-bottom:0"></p>
+  </div>
+
+  <!-- 2. TASK -->
+  <div class="card hidden" id="screenTask">
+    <div class="bar">
+      <span class="tag" id="tagInfo"></span>
+      <span class="timer" id="timer">00:00</span>
+    </div>
+    <div class="meter"><div id="progress"></div></div>
+    <div class="prompt" id="prompt"></div>
+    <textarea id="answer" rows="3" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Your answer"></textarea>
+    <div class="row"><button id="btnSubmit">Submit answer</button></div>
+  </div>
+
+  <!-- 3. RATING -->
+  <div class="card hidden" id="screenRate">
+    <h2>How stressful was that problem?</h2>
+    <p class="lead">Pick the number that matches how you felt while solving it.</p>
+    <div class="rate" id="rateBtns"></div>
+    <div class="scale"><span>Very calm</span><span>Very stressed</span></div>
+  </div>
+
+  <!-- 4. RESULTS -->
+  <div class="card hidden" id="screenDone">
+    <h2>Session complete</h2>
+    <p class="lead" id="doneSummary"></p>
+    <table id="resultTable"></table>
+    <div class="pred" id="prediction">Model prediction: not connected yet. Set <code>CFG.API_URL</code> in the script to send data to the model.</div>
+    <div class="row">
+      <button id="btnJson">Download metrics (JSON)</button>
+      <button class="alt" id="btnCsv">Download metrics (CSV)</button>
+      <button class="alt" id="btnFrames">Download webcam frames</button>
+      <button class="alt" id="btnAgain">New session</button>
+    </div>
+  </div>
+
+</section>
+
+<aside>
+  <div class="card">
+    <video id="cam" autoplay muted playsinline></video>
+    <div class="stats">
+      <div class="stat"><b id="sWpm">0</b><small>words/min</small></div>
+      <div class="stat"><b id="sBack">0</b><small>backspaces</small></div>
+      <div class="stat"><b id="sFrames">0</b><small>frames captured</small></div>
+      <div class="stat"><b id="sPause">0</b><small>long pauses</small></div>
+    </div>
+  </div>
+</aside>
+</main>
+
+<canvas id="grab" width="160" height="120" class="hidden"></canvas>
+
+<script>
+/* ============ CONFIG (teammates: edit here) ============ */
+const CFG = {
+  API_URL: '',          // e.g. 'http://localhost:5000/predict'. Empty = no server call.
+  FRAME_MS: 2000,       // webcam capture interval
+  TOTAL: 6,             // problems per session
+  LIMITS: {1: 60, 2: 45, 3: 35},   // seconds allowed per difficulty
+  PAUSE_MS: 2000        // gap between keystrokes counted as a "long pause"
+};
+
+const PASSAGES = {
+  1: ["The sun rises in the east and sets in the west.",
+      "A small dog ran across the green field."],
+  2: ["Learning to program takes patience, practice, and a willingness to make mistakes.",
+      "The library closes at eight, so please return your books before then."],
+  3: ["Meticulous researchers cross-validate their findings, scrutinizing every anomaly before drawing conclusions.",
+      "Unpredictable deadlines, overlapping responsibilities, and limited resources can quickly overwhelm even experienced engineers."]
+};
+
+/* ============ HELPERS ============ */
+const $ = id => document.getElementById(id);
+const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+const sd = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+const show = id => ['screenStart','screenTask','screenRate','screenDone'].forEach(s => $(s).classList.toggle('hidden', s !== id));
+
+/* ============ STATE ============ */
+let session, cur, stream, frameTimer, tickTimer, lastTyped = [];
+
+function newSession() {
+  session = { participant: $('pid').value.trim() || 'anon', difficultyMode: $('diff').value,
+              startedAt: new Date().toISOString(), problems: [], frames: [] };
+}
+
+/* ============ CAMERA ============ */
+async function startCamera() {
+  stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+  $('cam').srcObject = stream;
+  $('recDot').classList.add('on'); $('recText').textContent = 'Camera on';
+}
+function stopCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  $('recDot').classList.remove('on'); $('recText').textContent = 'Camera off';
+}
+function grabFrame() {
+  const v = $('cam'); if (!v.videoWidth) return;
+  const c = $('grab'), ctx = c.getContext('2d');
+  ctx.drawImage(v, 0, 0, c.width, c.height);
+  session.frames.push({ problemId: cur.id, t: Math.round(performance.now() - cur.t0), image: c.toDataURL('image/jpeg', 0.6) });
+  $('sFrames').textContent = session.frames.length;
+}
+
+/* ============ PROBLEMS ============ */
+function difficultyFor(i) {
+  if (session.difficultyMode !== 'ramp') return +session.difficultyMode;
+  return i < 2 ? 1 : i < 4 ? 2 : 3;
+}
+function makeMath(d) {
+  let a, b, c;
+  if (d === 1) { a = rand(10, 99); b = rand(10, 99); return { text: `${a} + ${b} = ?`, answer: String(a + b) }; }
+  if (d === 2) { a = rand(12, 49); b = rand(3, 9);  return { text: `${a} × ${b} = ?`, answer: String(a * b) }; }
+  a = rand(12, 39); b = rand(12, 29); c = rand(10, 99);
+  return { text: `${a} × ${b} + ${c} = ?`, answer: String(a * b + c) };
+}
+function makeProblem(i) {
+  const d = difficultyFor(i), isMath = i % 2 === 0;
+  if (isMath) return { type: 'math', difficulty: d, ...makeMath(d) };
+  const list = PASSAGES[d];
+  return { type: 'typing', difficulty: d, text: list[rand(0, list.length - 1)], answer: null };
+}
+
+/* ============ RUN A PROBLEM ============ */
+function startProblem(i) {
+  const p = makeProblem(i);
+  cur = { id: i + 1, ...p, limit: CFG.LIMITS[p.difficulty], t0: performance.now(),
+          keyTimes: [], intervals: [], backspaces: 0, pauses: 0, firstKeyLatency: null, lastKey: null, rating: null };
+  $('tagInfo').textContent = `Problem ${cur.id} of ${CFG.TOTAL} · ${p.type === 'math' ? 'Math' : 'Typing'} · ${['', 'Easy', 'Medium', 'Hard'][p.difficulty]}`;
+  $('progress').style.width = (i / CFG.TOTAL * 100) + '%';
+  const pr = $('prompt'); pr.textContent = p.text; pr.className = 'prompt' + (p.type === 'typing' ? ' mono' : '');
+  const a = $('answer'); a.value = ''; a.placeholder = p.type === 'math' ? 'Type your answer' : 'Type the text above';
+  a.rows = p.type === 'math' ? 1 : 3;
+  ['sWpm','sBack','sPause'].forEach(s => $(s).textContent = '0');
+  show('screenTask'); a.focus();
+  frameTimer = setInterval(grabFrame, CFG.FRAME_MS); grabFrame();
+  tickTimer = setInterval(tick, 250); tick();
+}
+function tick() {
+  const el = (performance.now() - cur.t0) / 1000, left = Math.max(0, cur.limit - el);
+  const t = $('timer'); t.textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(Math.ceil(left % 60) % 60).padStart(2, '0')}`;
+  t.classList.toggle('low', left <= 10);
+  const typed = $('answer').value.length;
+  $('sWpm').textContent = el > 1 ? Math.round((typed / 5) / (el / 60)) : 0;
+  if (left <= 0) finishProblem(true);
+}
+
+/* keystroke capture */
+$('answer').addEventListener('keydown', e => {
+  if (!cur) return;
+  const now = performance.now();
+  if (cur.firstKeyLatency === null) cur.firstKeyLatency = Math.round(now - cur.t0);
+  if (cur.lastKey !== null) {
+    const gap = now - cur.lastKey; cur.intervals.push(gap);
+    if (gap > CFG.PAUSE_MS) { cur.pauses++; $('sPause').textContent = cur.pauses; }
+  }
+  cur.lastKey = now; cur.keyTimes.push(Math.round(now - cur.t0));
+  if (e.key === 'Backspace' || e.key === 'Delete') { cur.backspaces++; $('sBack').textContent = cur.backspaces; }
+  if (e.key === 'Enter' && cur.type === 'math') { e.preventDefault(); finishProblem(false); }
+});
+['paste', 'drop'].forEach(ev => $('answer').addEventListener(ev, e => e.preventDefault()));
+$('btnSubmit').addEventListener('click', () => finishProblem(false));
+
+function finishProblem(timedOut) {
+  clearInterval(frameTimer); clearInterval(tickTimer);
+  const secs = (performance.now() - cur.t0) / 1000, typed = $('answer').value;
+  let correct, errors = 0;
+  if (cur.type === 'math') { correct = typed.trim() === cur.answer; errors = correct ? 0 : 1; }
+  else {
+    for (let i = 0; i < Math.max(typed.length, cur.text.length); i++) if (typed[i] !== cur.text[i]) errors++;
+    correct = errors === 0;
+  }
+  session.problems.push({
+    problemId: cur.id, type: cur.type, difficulty: cur.difficulty, timeLimitSec: cur.limit,
+    timeTakenSec: +secs.toFixed(2), timedOut, correct, errors, charsTyped: typed.length,
+    wpm: +((typed.length / 5) / (secs / 60)).toFixed(1), backspaces: cur.backspaces,
+    meanKeyIntervalMs: Math.round(mean(cur.intervals)), sdKeyIntervalMs: Math.round(sd(cur.intervals)),
+    longPauses: cur.pauses, firstKeyLatencyMs: cur.firstKeyLatency ?? null,
+    framesCaptured: session.frames.filter(f => f.problemId === cur.id).length,
+    selfStress: null
+  });
+  buildRating(); show('screenRate');
+}
+
+/* ============ SELF-REPORT (training label) ============ */
+function buildRating() {
+  const box = $('rateBtns'); box.innerHTML = '';
+  for (let n = 1; n <= 5; n++) {
+    const b = document.createElement('button'); b.textContent = n;
+    b.addEventListener('click', () => {
+      session.problems[session.problems.length - 1].selfStress = n;
+      session.problems.length < CFG.TOTAL ? startProblem(session.problems.length) : endSession();
+    });
+    box.appendChild(b);
+  }
+}
+
+/* ============ END + EXPORT ============ */
+async function endSession() {
+  stopCamera(); $('progress').style.width = '100%';
+  const ok = session.problems.filter(p => p.correct).length;
+  $('doneSummary').textContent = `${ok} of ${CFG.TOTAL} correct · ${session.frames.length} webcam frames captured.`;
+  const cols = ['problemId', 'type', 'difficulty', 'timeTakenSec', 'wpm', 'backspaces', 'longPauses', 'correct', 'selfStress'];
+  $('resultTable').innerHTML = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>' +
+    session.problems.map(p => '<tr>' + cols.map(c => `<td>${p[c]}</td>`).join('') + '</tr>').join('');
+  show('screenDone');
+  if (CFG.API_URL) sendToModel();
+}
+async function sendToModel() {
+  /* Payload shape for the ML teammates: { participant, problems:[...], frames:[{problemId,t,image(base64 jpeg)}] } */
+  try {
+    const r = await fetch(CFG.API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(session) });
+    const out = await r.json();   // expected e.g. { level: 'High', score: 0.82 }
+    $('prediction').textContent = `Model prediction: ${out.level ?? JSON.stringify(out)}`;
+  } catch (err) { $('prediction').textContent = 'Could not reach the model server: ' + err.message; }
+}
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click();
+}
+$('btnJson').onclick = () => download(`${session.participant}_metrics.json`, JSON.stringify({ ...session, frames: undefined }, null, 2), 'application/json');
+$('btnCsv').onclick = () => {
+  const cols = Object.keys(session.problems[0]);
+  download(`${session.participant}_metrics.csv`, [cols.join(',')].concat(session.problems.map(p => cols.map(c => p[c]).join(','))).join('\n'), 'text/csv');
+};
+$('btnFrames').onclick = () => download(`${session.participant}_frames.json`, JSON.stringify(session.frames), 'application/json');
+$('btnAgain').onclick = () => { $('sFrames').textContent = 0; show('screenStart'); };
+
+/* ============ START ============ */
+$('consent').addEventListener('change', e => $('btnStart').disabled = !e.target.checked);
+$('btnStart').addEventListener('click', async () => {
+  $('startErr').textContent = '';
+  try { await startCamera(); }
+  catch (err) { $('startErr').textContent = 'Camera access was blocked. Allow it in your browser settings, then try again.'; return; }
+  newSession(); startProblem(0);
+});
+</script>
+</body>
+</html>
